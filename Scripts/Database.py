@@ -11,20 +11,20 @@ class Database:
         return
     def create_database(self):
         tables = []
-        create_table_person = '''CREATE TABLE person(
+        create_table_person = '''CREATE TABLE IF NOT EXISTS person(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
         isActive INTEGER NOT NULL
         );'''
         tables.append(create_table_person)
-        create_table_category = '''CREATE TABLE category(
+        create_table_category = '''CREATE TABLE IF NOT EXISTS category(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         isActive INTEGER NOT NULL
         );'''
         tables.append(create_table_category)
-        create_table_subcategory = '''CREATE TABLE sub_category(
+        create_table_subcategory = '''CREATE TABLE IF NOT EXISTS sub_category(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         id_category INTEGER,
@@ -32,7 +32,7 @@ class Database:
         );
         '''
         tables.append(create_table_subcategory)
-        create_table_product = '''CREATE TABLE product(
+        create_table_product = '''CREATE TABLE IF NOT EXISTS product(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         id_category INTEGER NOT NULL,
@@ -43,7 +43,7 @@ class Database:
         );
         '''
         tables.append(create_table_product)
-        create_table_income = '''CREATE TABLE income(
+        create_table_income = '''CREATE TABLE IF NOT EXISTS income(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         id_person INTEGER NOT NULL,
         amount INTEGER NOT NULL,
@@ -53,20 +53,20 @@ class Database:
         );
         '''
         tables.append(create_table_income)
-        create_table_tag = '''CREATE TABLE tag(
+        create_table_tag = '''CREATE TABLE IF NOT EXISTS tag(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         isActive INTEGER NOT NULL
         );'''
         tables.append(create_table_tag)
-        create_table_product_tag = '''CREATE TABLE product_tag(
+        create_table_product_tag = '''CREATE TABLE IF NOT EXISTS product_tag(
         id_product INTEGER NOT NULL,
         id_tag INTEGER NOT NULL,
         FOREIGN KEY(id_product) REFERENCES product(id),
         FOREIGN KEY(id_tag) REFERENCES tag(id)
         );'''
         tables.append(create_table_product_tag)
-        create_table_record = '''CREATE TABLE record(
+        create_table_record = '''CREATE TABLE IF NOT EXISTS record(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         id_product INTEGER NOT NULL,
         id_person INTEGER NOT NULL,

@@ -1,8 +1,13 @@
 from Scripts import Database as database
-import sqlite3
+from PyQt5.QtWidgets import QApplication,QLabel
 
-print(r"Hi! I'll try to create database")
 db = database.Database('database.db')
+app = QApplication([])
+label = QLabel("Hello world")
+label.show()
+app.exec_()
 
-db.create_database()
+
+
+#db.create_database()
 
