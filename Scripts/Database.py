@@ -67,11 +67,11 @@ class Database:
         );'''
         tables.append(create_table_product_tag)
         create_table_record = '''CREATE TABLE IF NOT EXISTS record(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
         id_product INTEGER NOT NULL,
         id_person INTEGER NOT NULL,
         price REAL NOT NULL,
         date TEXT NOT NULL,
+        isActive INTEGER NOT NULL,
         FOREIGN KEY(id_product) REFERENCES product(id),
         FOREIGN KEY(id_person) REFERENCES person(id)
         );
