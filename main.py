@@ -1,11 +1,11 @@
-from Scripts import Database as database
-db = database.Database('database.db')
-
-
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLineEdit, QPushButton,QLabel,QVBoxLayout,QHBoxLayout, QFormLayout, QTabWidget,QDialog
 )
+from Scripts import Database as database
+db = database.Database('database.db')
+
+# class Dialog inherits from QDialog class
 class Dialog(QDialog):
     def __init__(self, tab_id, edit, id, dialog_name="", parent=None):
         self.edit=edit
@@ -19,20 +19,25 @@ class Dialog(QDialog):
         layout.addLayout(self.prepare_dialog(tab_id))
         button_layout.addWidget(QPushButton("Cancel",clicked= lambda: self.cancel_click()))
         layout.addLayout(button_layout)
-        return
+
     def person_click(self, fname, lname):
-        print("Twoja godnosc to", fname, lname)
-        return
+        if self.edit:
+            db.edit_person(fname, lname,self.id)
+        else:
+            db.add_person(fname, lname)
+
     def prepare_dialog(self, tab_id):
         layout = QFormLayout()
-        #Definitions of functions
+        # Definitions of functions
+
         def person_dialog():
             fname=QLineEdit(self)
             lname=QLineEdit(self)
-            if (self.edit == True):
+            if self.edit:
                 fname.setText("Edited")
                 lname.setText("Value")
-            button = QPushButton("Ok",clicked=lambda:self.person_click(fname.text(),lname.text()))
+
+            button = QPushButton("Ok", clicked=lambda:self.person_click(fname.text(), lname.text()))
             layout.addRow("Imie",fname)
             layout.addRow("Nazwisko",lname)
             layout.addRow(button)

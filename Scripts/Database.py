@@ -1,14 +1,18 @@
 import sqlite3
+import pandas as pd
 
 class Database:
-    connection=None
-# zrobić isActive
-    def __init__(self,path):
+    connection = None
+
+    # zrobić isActive
+    def __init__(self, path):
         self.connection = sqlite3.connect(path)
         return
+
     def __del__(self):
         self.connection.close()
         return
+
     def create_database(self):
         tables = []
         create_table_person = '''CREATE TABLE IF NOT EXISTS person(
@@ -82,6 +86,33 @@ class Database:
         for x in tables:
             cursor.execute(x)
         cursor.close()
-        return
-    def add_person(self,first_name,last_name):
-        return
+
+    # Person table get,add,edit and remove
+
+    def get_person(self):
+        command = "Select first_name,last_name,id from person"
+        result = pd.read_sql_query(command,self.connection)
+        print(result)
+
+    def add_person(self, first_name, last_name):
+        cursor = self.connection.cursor()
+        command = f"INSERT INTO person(first_name,last_name,isActive) VALUES('{first_name}','{last_name}',{1})"
+        print("such command will be executed:",command)
+        cursor.execute(command)
+        cursor.close()
+        self.connection.commit()
+
+    def edit_person(self, first_name, last_name, id):
+        cursor = self.connection.cursor()
+        command = f"INSERT INTO person(first_name,last_name) VALUES('{first_name}','{last_name}' WHERE id={id})"
+        print("such command will be executed:", command)
+        cursor.execute(command)
+        cursor.close()
+        self.connection.commit()
+
+    def remove_person(self, id):
+        cursor = self.connection.cursor()
+        command = f"INSERT INTO person(isActive) VALUES({1}) WHERE id={id}"
+        cursor.execute(command)
+        cursor.close()
+        self.connection.commit()
