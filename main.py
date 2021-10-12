@@ -1,17 +1,15 @@
-# from Scripts import Database as database
-# from Scripts import GUI
-# db = database.Database('database.db')
+from Scripts import Database as database
+db = database.Database('database.db')
 
 
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLineEdit, QPushButton,QLabel,QVBoxLayout,QHBoxLayout, QFormLayout, QTabWidget,QDialog
 )
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import pyqtSlot, QRect
 class Dialog(QDialog):
     def __init__(self, tab_id, edit, id, dialog_name="", parent=None):
+        self.edit=edit
+        self.id=id
         print("dialog name", dialog_name)
         super().__init__(parent)
         button_layout = QHBoxLayout()
@@ -31,7 +29,10 @@ class Dialog(QDialog):
         def person_dialog():
             fname=QLineEdit(self)
             lname=QLineEdit(self)
-            button = QPushButton("Add",clicked=lambda:self.person_click(fname.text(),lname.text()))
+            if (self.edit == True):
+                fname.setText("Edited")
+                lname.setText("Value")
+            button = QPushButton("Ok",clicked=lambda:self.person_click(fname.text(),lname.text()))
             layout.addRow("Imie",fname)
             layout.addRow("Nazwisko",lname)
             layout.addRow(button)
@@ -69,9 +70,11 @@ class MainPage(QWidget):
         self.widget()
 
     def person_button_press(self,edit,id=None):
-        print(edit,id)
-        dlg=Dialog(6,edit,id)
-        dlg.exec_()
+        if (not edit and not id==None):
+            print("remove code here")
+        else:
+            dlg=Dialog(6,edit,id)
+            dlg.exec_()
         return
     def init_tabs(self):
         for i,text in enumerate(self.tab_names):

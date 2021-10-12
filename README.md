@@ -1,2 +1,7 @@
 # Rachmistrz
-This should be a program which helps to visualise your spendings and earnings,
+I've installed via pip:
+numpy
+pandas
+PyQt5-stubs
+QtPy
+sqlite

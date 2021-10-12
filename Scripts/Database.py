@@ -83,4 +83,5 @@ class Database:
             cursor.execute(x)
         cursor.close()
         return
-
+    def add_person(self,first_name,last_name):
+        return
