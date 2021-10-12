@@ -11,18 +11,45 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import pyqtSlot, QRect
 class Dialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, tab_id, edit, id, dialog_name="", parent=None):
+        print("dialog name", dialog_name)
         super().__init__(parent)
-        button_layout=QHBoxLayout()
+        button_layout = QHBoxLayout()
         layout = QVBoxLayout()
-        self.setWindowTitle("Your Dialog")
+        self.setWindowTitle(dialog_name)
         self.setLayout(layout)
-        button_layout.addWidget(QPushButton("Ok",clicked= lambda: self.dialogClick()))
-        button_layout.addWidget(QPushButton("Cancel",clicked= lambda: self.dialogClick()))
-        layout.addWidget(QLabel("testowo"))
+        layout.addLayout(self.prepare_dialog(tab_id))
+        button_layout.addWidget(QPushButton("Cancel",clicked= lambda: self.cancel_click()))
         layout.addLayout(button_layout)
         return
-    def dialogClick(self):
+    def person_click(self, fname, lname):
+        print("Twoja godnosc to", fname, lname)
+        return
+    def prepare_dialog(self, tab_id):
+        layout = QFormLayout()
+        #Definitions of functions
+        def person_dialog():
+            fname=QLineEdit(self)
+            lname=QLineEdit(self)
+            button = QPushButton("Add",clicked=lambda:self.person_click(fname.text(),lname.text()))
+            layout.addRow("Imie",fname)
+            layout.addRow("Nazwisko",lname)
+            layout.addRow(button)
+
+            return layout
+        # here we'll launch proper function on certain number
+        switcher = {
+            0: 0,
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 5,
+            6: person_dialog()
+        }
+
+        return switcher.get(tab_id,"error")
+    def cancel_click(self):
         self.close()
 
 class MainPage(QWidget):
@@ -30,21 +57,20 @@ class MainPage(QWidget):
     tab=[]
     def __init__(self, title=" "):
         super().__init__()  # inherit init of QWidget
-        print(self.tab_names)
-        self.personLastName = QLineEdit(self)
-        self.personFirstName = QLineEdit(self)
-        self.layout = QVBoxLayout(self)
-        self.tabs = QTabWidget()
         self.title = title
         self.left = 250
         self.top = 250
         self.width = 800
         self.height = 500
+
+        self.layout = QVBoxLayout(self)
+        self.tabs = QTabWidget()
         self.init_tabs()
         self.widget()
 
-    def osoby_button_press(self):
-        dlg=Dialog(self)
+    def person_button_press(self,edit,id=None):
+        print(edit,id)
+        dlg=Dialog(6,edit,id)
         dlg.exec_()
         return
     def init_tabs(self):
@@ -55,22 +81,25 @@ class MainPage(QWidget):
     def widget(self):
         # window setup
         self.setWindowTitle(self.title)
-        # self.setGeometry(self.left, self.top, self.width, self.height)
+        #self.setGeometry(self.left, self.top, self.width, self.height)
         ## use above line or below
         self.resize(self.width, self.height)
         self.move(self.left, self.top)
         # Creating a tabs:
         self.layout.addWidget(self.tabs)
-        self.create_tab_osoby()
+        self.create_tab_person()
         self.show()
 
-    def create_tab_osoby(self):
+    def create_tab_person(self):
         i = self.tab_names.index("Osoby")
+        button_add = QPushButton("Dodaj",clicked = lambda: self.person_button_press(False))
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.person_button_press(True,1))
+        button_remove = QPushButton("Usuń",clicked = lambda: self.person_button_press(False,1))
         layout = QFormLayout()
         self.tab[i].setLayout(layout)
-       # layout.addRow("Imie", self.personFirstName)
-       # layout.addRow("Nazwisko", self.personLastName)
-        layout.addRow(QPushButton("Add",clicked = lambda: self.osoby_button_press()))
+        layout.addRow(button_add)
+        layout.addRow(button_edit)
+        layout.addRow(button_remove)
         return
 
 def main():
