@@ -1,6 +1,7 @@
 import sys
+import pandas
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QLineEdit, QPushButton,QLabel,QVBoxLayout,QHBoxLayout, QFormLayout, QTabWidget,QDialog
+    QApplication, QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout, QTableWidget, QHBoxLayout, QFormLayout, QTabWidget,QDialog
 )
 from Scripts import Database as database
 db = database.Database('database.db')
@@ -80,7 +81,9 @@ class MainPage(QWidget):
         else:
             dlg=Dialog(6,edit,id)
             dlg.exec_()
-        return
+        
+		# fun init tabs is getting info about tabs' names from tab_names variable, and it's adding it to the main window.
+		
     def init_tabs(self):
         for i,text in enumerate(self.tab_names):
             self.tab.append(QWidget())
@@ -89,8 +92,6 @@ class MainPage(QWidget):
     def widget(self):
         # window setup
         self.setWindowTitle(self.title)
-        #self.setGeometry(self.left, self.top, self.width, self.height)
-        ## use above line or below
         self.resize(self.width, self.height)
         self.move(self.left, self.top)
         # Creating a tabs:
@@ -100,15 +101,26 @@ class MainPage(QWidget):
 
     def create_tab_person(self):
         i = self.tab_names.index("Osoby")
+		# Table with contents of person table
+		table=create_table(db.get_person())
         button_add = QPushButton("Dodaj",clicked = lambda: self.person_button_press(False))
         button_edit = QPushButton("Edytuj", clicked=lambda: self.person_button_press(True,1))
         button_remove = QPushButton("Usuń",clicked = lambda: self.person_button_press(False,1))
-        layout = QFormLayout()
+        layout = QGridLayout()
         self.tab[i].setLayout(layout)
-        layout.addRow(button_add)
-        layout.addRow(button_edit)
-        layout.addRow(button_remove)
+		
+		# table_row_height = 5
+		# table_colums_width = 4
+		layout.addWidget(table,0,0,table_row_height,table_colums_width)
+        layout.addWidget(button_add, table_row_height, 0, 1, 1)
+        layout.addWidget(button_edit, table_row_height, 1, 1, 1)
+        layout.addWidget(button_remove, table_row_height, table_colums_width - 1, 1, 1)
         return
+
+def create_table(data):
+
+	table = QTableWidget()
+	return table
 
 def main():
     app = QApplication(sys.argv)

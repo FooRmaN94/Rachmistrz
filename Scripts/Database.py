@@ -89,12 +89,21 @@ class Database:
 
     # Person table get,add,edit and remove
 
-    def get_person(self):
-        command = "Select first_name,last_name,id from person"
+    def get_person(self, id=None):
+		
+		# Check if id is null, if it's null return all records in the table. 
+		
+		if id==None:
+			command = "Select first_name,last_name,id from person"
+		else:
+			command = f"Select first_name,last_name,id from person where id = {id}"
         result = pd.read_sql_query(command,self.connection)
         print(result)
 
     def add_person(self, first_name, last_name):
+	
+		# Add new record to the person table
+		
         cursor = self.connection.cursor()
         command = f"INSERT INTO person(first_name,last_name,isActive) VALUES('{first_name}','{last_name}',{1})"
         print("such command will be executed:",command)
