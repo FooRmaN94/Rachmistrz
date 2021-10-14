@@ -1,7 +1,7 @@
 import sys
 import pandas
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout, QTableWidget, QHBoxLayout, QFormLayout, QTabWidget,QDialog
+    QApplication, QWidget, QLineEdit, QPushButton, QLabel, QVBoxLayout,QGridLayout, QTableWidget, QHBoxLayout, QFormLayout, QTabWidget,QDialog
 )
 from Scripts import Database as database
 db = database.Database('database.db')
@@ -32,8 +32,8 @@ class Dialog(QDialog):
         # Definitions of functions
 
         def person_dialog():
-            fname=QLineEdit(self)
-            lname=QLineEdit(self)
+            fname = QLineEdit(self)
+            lname = QLineEdit(self)
             if self.edit:
                 fname.setText("Edited")
                 lname.setText("Value")
@@ -81,9 +81,9 @@ class MainPage(QWidget):
         else:
             dlg=Dialog(6,edit,id)
             dlg.exec_()
-        
-		# fun init tabs is getting info about tabs' names from tab_names variable, and it's adding it to the main window.
-		
+
+        # fun init tabs is getting info about tabs' names from tab_names variable, and it's adding it to the main window.
+
     def init_tabs(self):
         for i,text in enumerate(self.tab_names):
             self.tab.append(QWidget())
@@ -101,26 +101,35 @@ class MainPage(QWidget):
 
     def create_tab_person(self):
         i = self.tab_names.index("Osoby")
-		# Table with contents of person table
-		table=create_table(db.get_person())
+        # Table with contents of person table
+        table=create_table(db.get_person())
         button_add = QPushButton("Dodaj",clicked = lambda: self.person_button_press(False))
         button_edit = QPushButton("Edytuj", clicked=lambda: self.person_button_press(True,1))
         button_remove = QPushButton("Usuń",clicked = lambda: self.person_button_press(False,1))
         layout = QGridLayout()
         self.tab[i].setLayout(layout)
-		
-		# table_row_height = 5
-		# table_colums_width = 4
-		layout.addWidget(table,0,0,table_row_height,table_colums_width)
+
+        table_row_height = 5
+        table_columns_width = 4
+        layout.addWidget(table,0,0,table_row_height,table_columns_width)
         layout.addWidget(button_add, table_row_height, 0, 1, 1)
         layout.addWidget(button_edit, table_row_height, 1, 1, 1)
-        layout.addWidget(button_remove, table_row_height, table_colums_width - 1, 1, 1)
+        layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
         return
 
 def create_table(data):
+    print("Data frame",pandas.DataFrame(data))
+    rows, columns = data.shape
+    table = QTableWidget()
+    table.setColumnCount(columns-1)
+    table.setRowCount(rows)
 
-	table = QTableWidget()
-	return table
+    # fill data
+    for r in rows:
+        for c in columns:
+
+
+    return table
 
 def main():
     app = QApplication(sys.argv)
