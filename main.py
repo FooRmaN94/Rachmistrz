@@ -1,14 +1,14 @@
 import sys
 import pandas
 from PyQt5.QtCore import(
-    Qt
-                           )
+    Qt)
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLineEdit, QPushButton, QTableWidgetItem, QLabel, QVBoxLayout, QGridLayout, QTableWidget,
-    QHBoxLayout, QFormLayout, QTabWidget, QDialog
+    QHBoxLayout, QFormLayout, QTabWidget, QDialog, QMessageBox
 )
 from Scripts import Database as database
 db = database.Database('database.db')
+
 
 # class Dialog inherits from QDialog class
 class Dialog(QDialog):
@@ -27,10 +27,10 @@ class Dialog(QDialog):
 
     def person_click(self, fname, lname):
         if self.edit:
-            db.edit_person(fname, lname,self.id)
+            show_message_box(db.edit_person(fname, lname,self.id))
+            self.close()
         else:
-            db.add_person(fname, lname)
-
+            show_message_box(db.add_person(fname, lname))
     def prepare_dialog(self, tab_id):
         layout = QFormLayout()
         # Definitions of functions
@@ -39,8 +39,10 @@ class Dialog(QDialog):
             fname = QLineEdit(self)
             lname = QLineEdit(self)
             if self.edit:
-                fname.setText("Edited")
-                lname.setText("Value")
+                data = db.get_person(self.id)
+                record = data.iloc[0]
+                fname.setText(record[1]) # take first_name from db and set as textbox text value
+                lname.setText(record[2]) # take last_name from db and set as textbox text value
 
             button = QPushButton("Ok", clicked=lambda:self.person_click(fname.text(), lname.text()))
             layout.addRow("Imię", fname)
@@ -83,8 +85,11 @@ class MainPage(QWidget):
         self.widget()
 
     def person_button_press(self, edit, record_id=None):
+        # if remove was clicked
         if (not edit) and not(record_id is None):
-            db.remove_person(record_id)
+            test = db.remove_person(record_id)
+            show_message_box(test)
+        # Else dialog will edit or add. Function below will handle it
         else:
             dlg = Dialog(6, edit, record_id)
             dlg.exec_()
@@ -111,7 +116,7 @@ class MainPage(QWidget):
         # Table with contents of person table
         table = create_table(db.get_person())
         button_add = QPushButton("Dodaj",clicked=lambda: self.person_button_press(False))
-        button_edit = QPushButton("Edytuj", clicked=lambda: self.person_button_press(True, 1))
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.person_button_press(True, self.get_id(table)))
         button_remove = QPushButton("Usuń", clicked=lambda: self.person_button_press(False, self.get_id(table)))
         layout = QGridLayout()
         self.tab[i].setLayout(layout)
@@ -125,9 +130,24 @@ class MainPage(QWidget):
         return
 
     def get_id(self, table):
-        row = table.currentRow()
+        # pick currently selected row, and point to it's first hidden column which contains the ID and return it as ID
         item_id = table.item(table.currentRow(), 0)
         return item_id.data(Qt.DisplayRole.real)
+
+
+def show_message_box(test):
+    alert = QMessageBox()
+    if test:
+        alert.setWindowTitle("Sukces")
+        alert.setIcon(QMessageBox.Information)
+        alert.setText("Pomyślnie wykonano operację")
+        alert.setStandardButtons(QMessageBox.Ok)
+    else:
+        alert.setWindowTitle("Błąd")
+        alert.setIcon(QMessageBox.Critical)
+        alert.setText("Błąd w trakcie wykonywania operacji")
+        alert.setStandardButtons(QMessageBox.Ok)
+    alert.exec_()
 
 def create_table(data):
     rows, columns = data.shape

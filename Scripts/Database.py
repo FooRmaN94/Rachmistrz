@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 import pandas as pd
 
 class Database:
@@ -93,7 +94,7 @@ class Database:
 
         # Check if id is null, if it's null return all records in the table.
         if person_id is None:
-            command = "Select id, first_name, last_name from person"
+            command = "Select id, first_name, last_name from person where isActive == 1"
         else:
             command = f"Select id, first_name,last_name from person where id = {person_id}"
         result = pd.read_sql_query(command, self.connection)
@@ -103,27 +104,38 @@ class Database:
         return result
 
     def add_person(self, first_name, last_name):
-
-        # Add new record to the person table
-
         cursor = self.connection.cursor()
-        command = f"INSERT INTO person(first_name,last_name,isActive) VALUES('{first_name}','{last_name}',{1})"
-        print("such command will be executed:",command)
-        cursor.execute(command)
-        cursor.close()
-        self.connection.commit()
+        try:
+            command = f"INSERT INTO person(first_name,last_name,isActive) VALUES('{first_name}','{last_name}',{1})"
+            cursor.execute(command)
+            cursor.close()
+            self.connection.commit()
+        except:
+            return False
+        finally:
+            return True
 
     def edit_person(self, first_name, last_name, id):
         cursor = self.connection.cursor()
-        command = f"INSERT INTO person(first_name,last_name) VALUES('{first_name}','{last_name}' WHERE id={id})"
-        print("such command will be executed:", command)
-        cursor.execute(command)
-        cursor.close()
-        self.connection.commit()
-
+        try:
+            command = f"UPDATE person SET first_name='{first_name}', last_name='{last_name}' WHERE id={id}"
+            cursor.execute(command)
+            cursor.close()
+            self.connection.commit()
+        except:
+            return False
+        finally:
+            return True
     def remove_person(self, id):
         cursor = self.connection.cursor()
-        command = f"INSERT INTO person(isActive) VALUES({1}) WHERE id={id}"
-        cursor.execute(command)
-        cursor.close()
-        self.connection.commit()
+        try:
+            command = f"UPDATE person SET isActive=0 WHERE id={id}"
+            cursor.execute(command)
+            cursor.close()
+            self.connection.commit()
+
+        except:
+            result = False
+        finally:
+            result = True
+        return result
