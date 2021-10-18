@@ -89,16 +89,18 @@ class Database:
 
     # Person table get,add,edit and remove
 
-    def get_person(self, id=None):
+    def get_person(self, person_id=None):
 
         # Check if id is null, if it's null return all records in the table.
-        if id is None:
-            command = "Select first_name, last_name, id from person"
+        if person_id is None:
+            command = "Select id, first_name, last_name from person"
         else:
-            command = f"Select first_name,last_name,id from person where id = {id}"
+            command = f"Select id, first_name,last_name from person where id = {person_id}"
         result = pd.read_sql_query(command, self.connection)
         header = ["Imię","Nazwisko"]
-        return result, header
+        result.rename(columns={"first_name": header[0], "last_name": header[1]}, inplace=True)
+
+        return result
 
     def add_person(self, first_name, last_name):
 
