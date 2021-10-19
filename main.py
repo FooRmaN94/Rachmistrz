@@ -3,7 +3,7 @@ import pandas
 from PyQt5.QtCore import(
     Qt)
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QLineEdit, QPushButton, QTableWidgetItem, QLabel, QVBoxLayout, QGridLayout, QTableWidget,
+    QApplication, QWidget, QLineEdit, QAbstractScrollArea, QPushButton, QTableWidgetItem, QLabel, QVBoxLayout, QGridLayout, QTableWidget,
     QHBoxLayout, QFormLayout, QTabWidget, QDialog, QMessageBox
 )
 from Scripts import Database as database
@@ -94,6 +94,7 @@ class MainPage(QWidget):
             dlg = Dialog(6, edit, record_id)
             dlg.exec_()
 
+
 # fun init tabs is getting info about tabs' names from tab_names variable, and it's adding it to the main window.
 
     def init_tabs(self):
@@ -120,7 +121,6 @@ class MainPage(QWidget):
         button_remove = QPushButton("Usuń", clicked=lambda: self.person_button_press(False, self.get_id(table)))
         layout = QGridLayout()
         self.tab[i].setLayout(layout)
-
         table_row_height = 5
         table_columns_width = 4
         layout.addWidget(table, 0, 0, table_row_height, table_columns_width)
@@ -156,6 +156,7 @@ def create_table(data):
     table.setRowCount(rows)
     table.setHorizontalHeaderLabels(data.head())
     table.setColumnHidden(0, True)
+    table.horizontalHeader().setStretchLastSection(True)
     # fill data
     for i, r in enumerate(data.iterrows()):
         tmp = r[1].values
@@ -166,7 +167,6 @@ def create_table(data):
                 table.setItem(i, j, item)
             else:
                 table.setItem(i, j, QTableWidgetItem(str(value)))
-
     return table
 
 
