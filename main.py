@@ -1,7 +1,8 @@
 import sys
 import pandas
-from PyQt5.QtCore import(
-    Qt)
+from PyQt5 import(
+    QtCore
+)
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLineEdit, QAbstractScrollArea, QPushButton, QTableWidgetItem, QLabel, QVBoxLayout, QGridLayout, QTableWidget,
     QHBoxLayout, QFormLayout, QTabWidget, QDialog, QMessageBox
@@ -31,6 +32,7 @@ class Dialog(QDialog):
             self.close()
         else:
             show_message_box(db.add_person(fname, lname))
+            self.close()
     def prepare_dialog(self, tab_id):
         layout = QFormLayout()
         # Definitions of functions
@@ -78,12 +80,12 @@ class MainPage(QWidget):
         self.top = 250
         self.width = 600
         self.height = 233
-
+        # init tables
+        self.personTable = QTableWidget()
         self.layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
         self.init_tabs()
         self.widget()
-
     def person_button_press(self, edit, record_id=None):
         # if remove was clicked
         if (not edit) and not(record_id is None):
@@ -93,6 +95,7 @@ class MainPage(QWidget):
         else:
             dlg = Dialog(6, edit, record_id)
             dlg.exec_()
+        create_table(db.get_person(),self.personTable)
 
 
 # fun init tabs is getting info about tabs' names from tab_names variable, and it's adding it to the main window.
@@ -115,15 +118,15 @@ class MainPage(QWidget):
     def create_tab_person(self):
         i = self.tab_names.index("Osoby")
         # Table with contents of person table
-        table = create_table(db.get_person())
+        create_table(db.get_person(), self.personTable)
         button_add = QPushButton("Dodaj",clicked=lambda: self.person_button_press(False))
-        button_edit = QPushButton("Edytuj", clicked=lambda: self.person_button_press(True, self.get_id(table)))
-        button_remove = QPushButton("Usuń", clicked=lambda: self.person_button_press(False, self.get_id(table)))
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.person_button_press(True, self.get_id(self.personTable)))
+        button_remove = QPushButton("Usuń", clicked=lambda: self.person_button_press(False, self.get_id(self.personTable)))
         layout = QGridLayout()
         self.tab[i].setLayout(layout)
         table_row_height = 5
         table_columns_width = 4
-        layout.addWidget(table, 0, 0, table_row_height, table_columns_width)
+        layout.addWidget(self.personTable, 0, 0, table_row_height, table_columns_width)
         layout.addWidget(button_add, table_row_height, 0, 1, 1)
         layout.addWidget(button_edit, table_row_height, 1, 1, 1)
         layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
@@ -132,7 +135,8 @@ class MainPage(QWidget):
     def get_id(self, table):
         # pick currently selected row, and point to it's first hidden column which contains the ID and return it as ID
         item_id = table.item(table.currentRow(), 0)
-        return item_id.data(Qt.DisplayRole.real)
+        print("item",item_id)
+        return item_id.data(QtCore.Qt.DisplayRole.real)
 
 
 def show_message_box(test):
@@ -149,9 +153,9 @@ def show_message_box(test):
         alert.setStandardButtons(QMessageBox.Ok)
     alert.exec_()
 
-def create_table(data):
+
+def create_table(data, table):
     rows, columns = data.shape
-    table = QTableWidget()
     table.setColumnCount(columns)
     table.setRowCount(rows)
     table.setHorizontalHeaderLabels(data.head())
@@ -163,18 +167,16 @@ def create_table(data):
         for j, value in enumerate(tmp):
             if j == 0:
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, value)
+                item.setData(QtCore.Qt.DisplayRole, value)
                 table.setItem(i, j, item)
             else:
                 table.setItem(i, j, QTableWidgetItem(str(value)))
-    return table
 
 
 def main():
     app = QApplication(sys.argv)
     w = MainPage(title="RachMistrz")
     sys.exit(app.exec_())
-
 
 if __name__ == '__main__':
     main()
