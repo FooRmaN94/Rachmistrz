@@ -69,7 +69,8 @@ class Database:
         id_tag INTEGER NOT NULL,
         FOREIGN KEY(id_product) REFERENCES product(id),
         FOREIGN KEY(id_tag) REFERENCES tag(id)
-        );'''
+        );
+		'''
         tables.append(create_table_product_tag)
         create_table_record = '''CREATE TABLE IF NOT EXISTS record(
         id_product INTEGER NOT NULL,
@@ -130,6 +131,59 @@ class Database:
         cursor = self.connection.cursor()
         try:
             command = f"UPDATE person SET isActive=0 WHERE id={id}"
+            cursor.execute(command)
+            cursor.close()
+            self.connection.commit()
+
+        except:
+            result = False
+        finally:
+            result = True
+        return result
+		
+	# Income table get,add,edit and remove
+
+    def get_income(self, person_id=None):
+
+        # Check if id is null, if it's null return all records in the table.
+        if person_id is None:
+            command = "Select id, first_name, last_name from person where isActive == 1"
+        else:
+            command = f"Select id, first_name,last_name from person where id = {person_id}"
+        result = pd.read_sql_query(command, self.connection)
+        header = ["Imię","Nazwisko"]
+        result.rename(columns={"first_name": header[0], "last_name": header[1]}, inplace=True)
+
+        return result
+	# to edit
+    def add_income(self, first_name, last_name):
+        cursor = self.connection.cursor()
+        try:
+            command = f"INSERT INTO person(first_name,last_name,isActive) VALUES('{first_name}','{last_name}',{1})"
+            cursor.execute(command)
+            cursor.close()
+            self.connection.commit()
+        except:
+            return False
+        finally:
+            return True
+	# To edit
+    def edit_income(self, first_name, last_name, id):
+        cursor = self.connection.cursor()
+        try:
+            command = f"UPDATE person SET first_name='{first_name}', last_name='{last_name}' WHERE id={id}"
+            cursor.execute(command)
+            cursor.close()
+            self.connection.commit()
+        except:
+            return False
+        finally:
+            return True
+			
+    def remove_income(self, id):
+        cursor = self.connection.cursor()
+        try:
+            command = f"UPDATE income SET isActive=0 WHERE id={id}"
             cursor.execute(command)
             cursor.close()
             self.connection.commit()

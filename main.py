@@ -59,7 +59,7 @@ class Dialog(QDialog):
             2: 2,
             3: 3,
             4: 4,
-            5: 5,
+            5: income_dialog(),
             6: person_dialog()
         }
 
@@ -89,11 +89,22 @@ class MainPage(QWidget):
     def person_button_press(self, edit, record_id=None):
         # if remove was clicked
         if (not edit) and not(record_id is None):
-            test = db.remove_person(record_id)
+            test = db.remove_income(record_id)
             show_message_box(test)
         # Else dialog will edit or add. Function below will handle it
         else:
             dlg = Dialog(6, edit, record_id)
+            dlg.exec_()
+        create_table(db.get_person(),self.personTable)
+	
+    def income_button_press(self, edit, record_id=None):
+        # if remove was clicked
+        if (not edit) and not(record_id is None):
+            test = db.remove_person(record_id)
+            show_message_box(test)
+        # Else dialog will edit or add. Function below will handle it
+        else:
+            dlg = Dialog(5, edit, record_id)
             dlg.exec_()
         create_table(db.get_person(),self.personTable)
 
@@ -131,6 +142,14 @@ class MainPage(QWidget):
         layout.addWidget(button_edit, table_row_height, 1, 1, 1)
         layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
         return
+		
+	def create_tab_income(slef):
+		i = self.tab_names.index("Wpływy")
+		
+		button_add = QPushButton("Dodaj",clicked=lambda: self.income_button_press())
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.income_button_press())
+        button_remove = QPushButton("Usuń", clicked=lambda: self.income_button_press())
+		
 
     def get_id(self, table):
         # pick currently selected row, and point to it's first hidden column which contains the ID and return it as ID
