@@ -16,14 +16,13 @@ class Dialog(QDialog):
     def __init__(self, tab_id, edit, id, dialog_name="", parent=None):
         self.edit = edit
         self.id = id
-        print("dialog name", dialog_name)
         super().__init__(parent)
         button_layout = QHBoxLayout()
         layout = QVBoxLayout()
         self.setWindowTitle(dialog_name)
         self.setLayout(layout)
         layout.addLayout(self.prepare_dialog(tab_id))
-        button_layout.addWidget(QPushButton("Cancel",clicked= lambda: self.cancel_click()))
+        button_layout.addWidget(QPushButton("Cancel", clicked=lambda: self.cancel_click()))
         layout.addLayout(button_layout)
 
     def person_click(self, fname, lname):
@@ -33,10 +32,16 @@ class Dialog(QDialog):
         else:
             show_message_box(db.add_person(fname, lname))
             self.close()
+
     def prepare_dialog(self, tab_id):
         layout = QFormLayout()
-        # Definitions of functions
+        # Definitions of layout design functions
 
+        def income_dialog():
+
+            if self.edit:
+                data = db.get_income(self.id)
+                record = data.iloc[0]
         def person_dialog():
             fname = QLineEdit(self)
             lname = QLineEdit(self)
@@ -86,30 +91,31 @@ class MainPage(QWidget):
         self.tabs = QTabWidget()
         self.init_tabs()
         self.widget()
+
     def person_button_press(self, edit, record_id=None):
+        # if remove was clicked
+        if not edit and not(record_id is None):
+            test = db.remove_person(record_id)
+            show_message_box(test)
+        # Else dialog will edit or add. Function below will handle it
+        else:
+            dlg = Dialog(6, edit, record_id, "Osoba")
+            dlg.exec_()
+        create_table(db.get_person(), self.personTable)
+
+    def income_button_press(self, edit, record_id=None):
         # if remove was clicked
         if (not edit) and not(record_id is None):
             test = db.remove_income(record_id)
             show_message_box(test)
         # Else dialog will edit or add. Function below will handle it
         else:
-            dlg = Dialog(6, edit, record_id)
-            dlg.exec_()
-        create_table(db.get_person(),self.personTable)
-	
-    def income_button_press(self, edit, record_id=None):
-        # if remove was clicked
-        if (not edit) and not(record_id is None):
-            test = db.remove_person(record_id)
-            show_message_box(test)
-        # Else dialog will edit or add. Function below will handle it
-        else:
             dlg = Dialog(5, edit, record_id)
             dlg.exec_()
-        create_table(db.get_person(),self.personTable)
+        # Refreshing the table
+        create_table(db.get_person(), self.personTable)
 
-
-# fun init tabs is getting info about tabs' names from tab_names variable, and it's adding it to the main window.
+    # fun init tabs is getting info about tabs' names from tab_names variable, and it's adding it to the main window.
 
     def init_tabs(self):
         for i, text in enumerate(self.tab_names):
@@ -143,13 +149,11 @@ class MainPage(QWidget):
         layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
         return
 		
-	def create_tab_income(slef):
-		i = self.tab_names.index("Wpływy")
-		
-		button_add = QPushButton("Dodaj",clicked=lambda: self.income_button_press())
+    def create_tab_income(self):
+        i = self.tab_names.index("Wpływy")
+        button_add = QPushButton("Dodaj",clicked=lambda: self.income_button_press())
         button_edit = QPushButton("Edytuj", clicked=lambda: self.income_button_press())
         button_remove = QPushButton("Usuń", clicked=lambda: self.income_button_press())
-		
 
     def get_id(self, table):
         # pick currently selected row, and point to it's first hidden column which contains the ID and return it as ID

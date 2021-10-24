@@ -51,7 +51,7 @@ class Database:
         create_table_income = '''CREATE TABLE IF NOT EXISTS income(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         id_person INTEGER NOT NULL,
-        amount INTEGER NOT NULL,
+        amount REAL NOT NULL,
         isActive INTEGER NOT NULL,
         date TEXT NOT NULL,
         FOREIGN KEY(id_person) REFERENCES person(id)
@@ -70,7 +70,7 @@ class Database:
         FOREIGN KEY(id_product) REFERENCES product(id),
         FOREIGN KEY(id_tag) REFERENCES tag(id)
         );
-		'''
+        '''
         tables.append(create_table_product_tag)
         create_table_record = '''CREATE TABLE IF NOT EXISTS record(
         id_product INTEGER NOT NULL,
@@ -99,7 +99,7 @@ class Database:
         else:
             command = f"Select id, first_name,last_name from person where id = {person_id}"
         result = pd.read_sql_query(command, self.connection)
-        header = ["Imię","Nazwisko"]
+        header = ["Imię", "Nazwisko"]
         result.rename(columns={"first_name": header[0], "last_name": header[1]}, inplace=True)
 
         return result
@@ -127,6 +127,7 @@ class Database:
             return False
         finally:
             return True
+
     def remove_person(self, id):
         cursor = self.connection.cursor()
         try:
@@ -140,26 +141,29 @@ class Database:
         finally:
             result = True
         return result
-		
-	# Income table get,add,edit and remove
 
-    def get_income(self, person_id=None):
+    # Income table get,add,edit and remove
+
+    def get_income(self, income_id=None):
 
         # Check if id is null, if it's null return all records in the table.
-        if person_id is None:
-            command = "Select id, first_name, last_name from person where isActive == 1"
+        if income_id is None:
+            command = f"""Select income.id, person.first_name, person.last_name, income.amount, income.date from income
+             inner join person on income.id_person = person.id"""
         else:
-            command = f"Select id, first_name,last_name from person where id = {person_id}"
+            command = f"""Select income.id, person.first_name, person.last_name, income.amount, income.date from income
+             inner join person on income.id_person = person.id where id = {income_id}"""
         result = pd.read_sql_query(command, self.connection)
-        header = ["Imię","Nazwisko"]
-        result.rename(columns={"first_name": header[0], "last_name": header[1]}, inplace=True)
-
+        header = ["Imię", "Nazwisko", "Wpływ", "Data"]
+        result.rename(columns={"first_name": header[0], "last_name": header[1], "amount": header[2], "date": header[3]},
+                      inplace=True)
         return result
-	# to edit
-    def add_income(self, first_name, last_name):
+
+    # to edit
+    def add_income(self, id_person, amount, date):
         cursor = self.connection.cursor()
         try:
-            command = f"INSERT INTO person(first_name,last_name,isActive) VALUES('{first_name}','{last_name}',{1})"
+            command = f"INSERT INTO income(id_person,amount,date,isActive) VALUES('{id_person}',{amount},'{date}',{1})"
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
@@ -167,11 +171,12 @@ class Database:
             return False
         finally:
             return True
-	# To edit
-    def edit_income(self, first_name, last_name, id):
+
+    # To edit
+    def edit_income(self, id_person, amount, date, id):
         cursor = self.connection.cursor()
         try:
-            command = f"UPDATE person SET first_name='{first_name}', last_name='{last_name}' WHERE id={id}"
+            command = f"UPDATE income SET id_person={id_person}, amount={amount}, date='{date}' WHERE id={id}"
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
@@ -179,7 +184,7 @@ class Database:
             return False
         finally:
             return True
-			
+
     def remove_income(self, id):
         cursor = self.connection.cursor()
         try:
