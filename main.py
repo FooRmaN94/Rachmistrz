@@ -28,7 +28,7 @@ class Dialog(QDialog):
 
     def person_click(self, fname, lname):
         if self.edit:
-            show_message_box(db.edit_person(fname, lname,self.id))
+            show_message_box(db.edit_person(fname, lname, self.id))
             self.close()
         else:
             show_message_box(db.add_person(fname, lname))
@@ -316,6 +316,7 @@ def main():
     app = QApplication(sys.argv)
     w = MainPage(title="RachMistrz")
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()
