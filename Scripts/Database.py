@@ -2,6 +2,7 @@ import sqlite3
 import sys
 import pandas as pd
 
+
 class Database:
     connection = None
 

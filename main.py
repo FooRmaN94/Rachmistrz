@@ -4,8 +4,8 @@ from PyQt5 import(
     QtCore
 )
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QLineEdit, QAbstractScrollArea, QPushButton, QTableWidgetItem, QLabel, QVBoxLayout, QGridLayout, QTableWidget,
-    QHBoxLayout, QFormLayout, QTabWidget, QDialog, QMessageBox
+    QApplication, QWidget, QLineEdit, QComboBox, QPushButton, QTableWidgetItem, QVBoxLayout, QGridLayout, QTableWidget,
+    QFormLayout, QTabWidget, QDialog, QMessageBox, QDateEdit
 )
 from Scripts import Database as database
 db = database.Database('database.db')
@@ -17,13 +17,14 @@ class Dialog(QDialog):
         self.edit = edit
         self.id = id
         super().__init__(parent)
-        button_layout = QHBoxLayout()
         layout = QVBoxLayout()
         self.setWindowTitle(dialog_name)
         self.setLayout(layout)
         layout.addLayout(self.prepare_dialog(tab_id))
-        button_layout.addWidget(QPushButton("Cancel", clicked=lambda: self.cancel_click()))
-        layout.addLayout(button_layout)
+        layout.addWidget(QPushButton("Cancel", clicked=lambda: self.cancel_click()))
+
+    def __del__(self):
+        print("destroyed")
 
     def person_click(self, fname, lname):
         if self.edit:
@@ -33,16 +34,31 @@ class Dialog(QDialog):
             show_message_box(db.add_person(fname, lname))
             self.close()
 
+    def income_click(self):
+        print("Hello from income")
+
     def prepare_dialog(self, tab_id):
-        layout = QFormLayout()
         # Definitions of layout design functions
 
         def income_dialog():
+            print("Income dialog is creating now...")
+            layout = QFormLayout(self)
+            person_id = QComboBox(self)
+            amount = QLineEdit(self)
+            date = QDateEdit(calendarPopup=True)
+            #if self.edit:
+                #data = db.get_income(self.id)
+                #record = data.iloc[0]
+            button = QPushButton("Ok", clicked=lambda: self.income_click())
+            layout.addRow("Osoba", person_id)
+            layout.addRow("Nazwisko", amount)
+            layout.addRow("Data", date)
+            layout.addRow(button)
+            return layout
 
-            if self.edit:
-                data = db.get_income(self.id)
-                record = data.iloc[0]
         def person_dialog():
+            print("person dialog is creating now...")
+            layout = QFormLayout(self)
             fname = QLineEdit(self)
             lname = QLineEdit(self)
             if self.edit:
@@ -55,7 +71,6 @@ class Dialog(QDialog):
             layout.addRow("Imię", fname)
             layout.addRow("Nazwisko", lname)
             layout.addRow(button)
-
             return layout
         # here we'll launch proper function on certain number
         switcher = {
@@ -87,6 +102,8 @@ class MainPage(QWidget):
         self.height = 233
         # init tables
         self.personTable = QTableWidget()
+        self.incomeTable = QTabWidget()
+        # end of tables
         self.layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
         self.init_tabs()
@@ -101,6 +118,7 @@ class MainPage(QWidget):
         else:
             dlg = Dialog(6, edit, record_id, "Osoba")
             dlg.exec_()
+        # Refresh the table
         create_table(db.get_person(), self.personTable)
 
     def income_button_press(self, edit, record_id=None):
@@ -112,8 +130,8 @@ class MainPage(QWidget):
         else:
             dlg = Dialog(5, edit, record_id)
             dlg.exec_()
-        # Refreshing the table
-        create_table(db.get_person(), self.personTable)
+        # Refresh the table
+        #create_table(db.get_income(), self.incomeTable)
 
     # fun init tabs is getting info about tabs' names from tab_names variable, and it's adding it to the main window.
 
@@ -122,6 +140,24 @@ class MainPage(QWidget):
             self.tab.append(QWidget())
             self.tabs.addTab(self.tab[i], self.tab_names[i])
 
+    def tab_changed(self, i):
+        if self.tab[i].layout():
+            pass
+        elif i == 0:
+            self.create_tab_record()
+        elif i == 1:
+            self.create_tab_product()
+        elif i == 2:
+            self.create_tab_category()
+        elif i == 3:
+            self.create_tab_subcategory()
+        elif i == 4:
+            self.create_tab_tag()
+        elif i == 5:
+            self.create_tab_income()
+        elif i == 6:
+            self.create_tab_person()
+
     def widget(self):
         # window setup
         self.setWindowTitle(self.title)
@@ -129,7 +165,10 @@ class MainPage(QWidget):
         self.move(self.left, self.top)
         # Creating a tabs:
         self.layout.addWidget(self.tabs)
-        self.create_tab_person()
+        self.create_tab_record()
+        self.tabs.blockSignals(True)
+        self.tabs.currentChanged.connect(self.tab_changed)
+        self.tabs.blockSignals(False)
         self.show()
 
     def create_tab_person(self):
@@ -148,17 +187,94 @@ class MainPage(QWidget):
         layout.addWidget(button_edit, table_row_height, 1, 1, 1)
         layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
         return
-		
+
     def create_tab_income(self):
         i = self.tab_names.index("Wpływy")
-        button_add = QPushButton("Dodaj",clicked=lambda: self.income_button_press())
-        button_edit = QPushButton("Edytuj", clicked=lambda: self.income_button_press())
-        button_remove = QPushButton("Usuń", clicked=lambda: self.income_button_press())
+        button_add = QPushButton("Dodaj",clicked=lambda: self.income_button_press(False))
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.income_button_press(True, 0))
+        button_remove = QPushButton("Usuń", clicked=lambda: self.income_button_press(False, 0))
+        layout = QGridLayout()
+        self.tab[i].setLayout(layout)
+        table_row_height = 5
+        table_columns_width = 4
+        #layout.addWidget(self.personTable, 0, 0, table_row_height, table_columns_width)
+        layout.addWidget(button_add, table_row_height, 0, 1, 1)
+        layout.addWidget(button_edit, table_row_height, 1, 1, 1)
+        layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
+
+    def create_tab_tag(self):
+        i = self.tab_names.index("Tagi")
+        button_add = QPushButton("Dodaj",clicked=lambda: self.tag_button_press(False))
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.tag_button_press(True, 0))
+        button_remove = QPushButton("Usuń", clicked=lambda: self.tag_button_press(False, 0))
+        layout = QGridLayout()
+        self.tab[i].setLayout(layout)
+        table_row_height = 5
+        table_columns_width = 4
+        #layout.addWidget(self.personTable, 0, 0, table_row_height, table_columns_width)
+        layout.addWidget(button_add, table_row_height, 0, 1, 1)
+        layout.addWidget(button_edit, table_row_height, 1, 1, 1)
+        layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
+
+    def create_tab_subcategory(self):
+        i = self.tab_names.index("Podkategorie")
+        button_add = QPushButton("Dodaj",clicked=lambda: self.subcategory_button_press(False))
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.subcategory_button_press(True, 0))
+        button_remove = QPushButton("Usuń", clicked=lambda: self.subcategory_button_press(False, 0))
+        layout = QGridLayout()
+        self.tab[i].setLayout(layout)
+        table_row_height = 5
+        table_columns_width = 4
+        #layout.addWidget(self.personTable, 0, 0, table_row_height, table_columns_width)
+        layout.addWidget(button_add, table_row_height, 0, 1, 1)
+        layout.addWidget(button_edit, table_row_height, 1, 1, 1)
+        layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
+
+    def create_tab_category(self):
+        i = self.tab_names.index("Kategorie")
+        button_add = QPushButton("Dodaj",clicked=lambda: self.category_button_press(False))
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.category_button_press(True, 0))
+        button_remove = QPushButton("Usuń", clicked=lambda: self.category_button_press(False, 0))
+        layout = QGridLayout()
+        self.tab[i].setLayout(layout)
+        table_row_height = 5
+        table_columns_width = 4
+        #layout.addWidget(self.personTable, 0, 0, table_row_height, table_columns_width)
+        layout.addWidget(button_add, table_row_height, 0, 1, 1)
+        layout.addWidget(button_edit, table_row_height, 1, 1, 1)
+        layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
+
+    def create_tab_product(self):
+        i = self.tab_names.index("Produkt")
+        button_add = QPushButton("Dodaj", clicked=lambda: self.product_button_press(False))
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.product_button_press(True, 0))
+        button_remove = QPushButton("Usuń", clicked=lambda: self.product_button_press(False, 0))
+        layout = QGridLayout()
+        self.tab[i].setLayout(layout)
+        table_row_height = 5
+        table_columns_width = 4
+        #layout.addWidget(self.personTable, 0, 0, table_row_height, table_columns_width)
+        layout.addWidget(button_add, table_row_height, 0, 1, 1)
+        layout.addWidget(button_edit, table_row_height, 1, 1, 1)
+        layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
+
+    def create_tab_record(self):
+        i = self.tab_names.index("Rekord")
+        button_add = QPushButton("Dodaj",clicked=lambda: self.record_button_press(False))
+        button_edit = QPushButton("Edytuj", clicked=lambda: self.record_button_press(True, 0))
+        button_remove = QPushButton("Usuń", clicked=lambda: self.record_button_press(False, 0))
+        layout = QGridLayout()
+        self.tab[i].setLayout(layout)
+        table_row_height = 5
+        table_columns_width = 4
+        #layout.addWidget(self.personTable, 0, 0, table_row_height, table_columns_width)
+        layout.addWidget(button_add, table_row_height, 0, 1, 1)
+        layout.addWidget(button_edit, table_row_height, 1, 1, 1)
+        layout.addWidget(button_remove, table_row_height, table_columns_width - 1, 1, 1)
 
     def get_id(self, table):
         # pick currently selected row, and point to it's first hidden column which contains the ID and return it as ID
         item_id = table.item(table.currentRow(), 0)
-        print("item",item_id)
         return item_id.data(QtCore.Qt.DisplayRole.real)
 
 
