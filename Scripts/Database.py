@@ -489,3 +489,31 @@ class Database:
         finally:
             result = True
         return result
+    def remove(self,tab_id, id = 999):
+        if tab_id == 0:
+            table = "record"
+        elif tab_id == 1:
+            table = "product"
+        elif tab_id == 2:
+            table = "category"
+        elif tab_id == 3:
+            table = "subcategory"
+        elif tab_id == 4:
+            table = "tag"
+        elif tab_id == 5:
+            table = "income"
+        elif tab_id == 6:
+            table = "person"
+        cursor = self.connection.cursor()
+        try:
+            command = f"UPDATE {table} SET isActive=0 WHERE id={id}"
+            print(command)
+            cursor.execute(command)
+            cursor.close()
+            self.connection.commit()
+        except:
+            result = False
+        finally:
+            result = True
+        return result
+
