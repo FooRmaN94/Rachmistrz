@@ -11,7 +11,7 @@ class Database:
         try:
             self.connection = sqlite3.connect(path)
         except:
-            print(f"Cannot connect to database at path {path}")
+            (f"Cannot connect to database at path {path}")
         finally:
             print(f"Succesfully connected to {path}")
 
@@ -97,15 +97,12 @@ class Database:
     # Person table get,add,edit and remove
 
     def get_person(self, person_id=None):
-        print("getting person in progress")
-        print("connection: ", self.connection)
         # Check if id is null, if it's null return all records in the table.
         if person_id is None:
             command = "Select id, first_name, last_name from person where isActive = 1"
         else:
             command = f"Select id, first_name,last_name from person where id = {person_id}"
         result = pd.read_sql_query(command, self.connection)
-        print("query:\n",result)
         header = ["Imię", "Nazwisko"]
         result.rename(columns={"first_name": header[0], "last_name": header[1]}, inplace=True)
 
@@ -513,7 +510,6 @@ class Database:
         cursor = self.connection.cursor()
         try:
             command = f"UPDATE {table} SET isActive=0 WHERE id={id}"
-            print(command)
             cursor.execute(command)
             cursor.close()
             self.connection.commit()

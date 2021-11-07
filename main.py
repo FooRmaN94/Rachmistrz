@@ -5,7 +5,7 @@ from PyQt5 import(
 )
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLineEdit, QComboBox, QPushButton, QTableWidgetItem, QVBoxLayout, QGridLayout, QTableWidget,
-    QFormLayout, QTabWidget, QDialog, QMessageBox, QDateEdit
+    QFormLayout, QTabWidget, QDialog, QMessageBox, QDateEdit, QHBoxLayout, QLayout
 )
 from Scripts import Database as database
 db = database.Database('database.db')
@@ -19,8 +19,10 @@ class Dialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(dialog_name)
         layout = QVBoxLayout()
-        layout.addChildLayout(self.prepare_dialog(tab_id)())
-        layout.addWidget(QPushButton("Cancel", clicked=lambda: self.cancel_click()))
+        cancel_button = QPushButton("Cancel", clicked=lambda: self.cancel_click())
+        dialog_layout = self.prepare_dialog(tab_id)()
+        dialog_layout.addRow(cancel_button)
+        layout.addLayout(dialog_layout)
         self.setLayout(layout)
 
     def person_click(self, fname, lname):
@@ -79,7 +81,6 @@ class Dialog(QDialog):
             layout.addRow("Imię", fname)
             layout.addRow("Nazwisko", lname)
             layout.addRow(button)
-            print("Before return layout")
             return layout
 
 
@@ -126,15 +127,13 @@ class MainPage(QWidget):
         self.widget()
 
     def button_pressed(self, edit, tab_name, tab_id, record_id=None):
-        print("tabName:",tab_name)
-        table = self.get_table_data(tab_id)
         if not edit and not(record_id is None):
             test = db.remove(tab_id, record_id)
             show_message_box(test)
         else:
             dlg = Dialog(tab_id, edit, record_id, tab_name)
             dlg.exec_()
-
+        table = self.get_table_data(tab_id)
         create_table(table['data'], table['table'])
 
     def get_table_data(self, tab_id):
@@ -159,11 +158,13 @@ class MainPage(QWidget):
             self.tab.append(QWidget())
             self.tabs.addTab(self.tab[i], self.tab_names[i])
 
-    def tab_changed(self, i):
-        if self.tab[i].layout():
+    def tab_changed(self, tab_id):
+        if self.tab[tab_id].layout():
+            table = self.get_table_data(tab_id)
+            create_table(table['data'], table['table'])
             pass
         else:
-            self.create_tab_layout(i)
+            self.create_tab_layout(tab_id)
 
     def widget(self):
         # window setup
@@ -198,7 +199,6 @@ class MainPage(QWidget):
     def get_id(self, table):
         # pick currently selected row, and point to it's first hidden column which contains the ID and return it as ID
         item_id = table.item(table.currentRow(), 0)
-        print("item id",item_id)
         return item_id.data(QtCore.Qt.DisplayRole.real)
 
 
@@ -234,7 +234,6 @@ def create_table(data, table):
                 table.setItem(i, j, item)
             else:
                 table.setItem(i, j, QTableWidgetItem(str(value)))
-
 
 def main():
     app = QApplication(sys.argv)
