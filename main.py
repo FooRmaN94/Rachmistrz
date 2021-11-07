@@ -17,14 +17,11 @@ class Dialog(QDialog):
         self.edit = edit
         self.id = id
         super().__init__(parent)
-        layout = QVBoxLayout()
         self.setWindowTitle(dialog_name)
-        self.setLayout(layout)
-        layout.addLayout(self.prepare_dialog(tab_id))
+        layout = QVBoxLayout()
+        layout.addChildLayout(self.prepare_dialog(tab_id)())
         layout.addWidget(QPushButton("Cancel", clicked=lambda: self.cancel_click()))
-
-    def __del__(self):
-        print("destroyed")
+        self.setLayout(layout)
 
     def person_click(self, fname, lname):
         if self.edit:
@@ -33,9 +30,6 @@ class Dialog(QDialog):
         else:
             show_message_box(db.add_person(fname, lname))
             self.close()
-
-    def income_click(self):
-        print("Hello from income")
 
     def prepare_dialog(self, tab_id):
         # Definitions of layout design functions
@@ -56,6 +50,21 @@ class Dialog(QDialog):
             layout.addRow(button)
             return layout
 
+        def category_dialog():
+            print("category dialog is creating now...")
+
+        def sub_category_dialog():
+            print("sub_category dialog is creating now...")
+
+        def tag_dialog():
+            print("tag dialog is creating now...")
+
+        def product_dialog():
+            print("product dialog is creating now...")
+
+        def record_dialog():
+            print("record dialog is creating now...")
+
         def person_dialog():
             print("person dialog is creating now...")
             layout = QFormLayout(self)
@@ -66,21 +75,23 @@ class Dialog(QDialog):
                 record = data.iloc[0]
                 fname.setText(record[1]) # take first_name from db and set as textbox text value
                 lname.setText(record[2]) # take last_name from db and set as textbox text value
-
             button = QPushButton("Ok", clicked=lambda:self.person_click(fname.text(), lname.text()))
             layout.addRow("Imię", fname)
             layout.addRow("Nazwisko", lname)
             layout.addRow(button)
+            print("Before return layout")
             return layout
+
+
         # here we'll launch proper function on certain number
         switcher = {
-            0: 0,
-            1: 1,
-            2: 2,
-            3: 3,
-            4: 4,
-            5: income_dialog(),
-            6: person_dialog()
+            0: record_dialog,
+            1: product_dialog,
+            2: category_dialog,
+            3: sub_category_dialog,
+            4: tag_dialog,
+            5: income_dialog,
+            6: person_dialog
         }
 
         return switcher.get(tab_id, "error")
@@ -105,7 +116,7 @@ class MainPage(QWidget):
         self.incomeTable = QTableWidget()
         self.tagTable = QTableWidget()
         self.categoryTable = QTableWidget()
-        self.subcategoryTable = QTableWidget()
+        self.sub_categoryTable = QTableWidget()
         self.productTable = QTableWidget()
         self.recordTable = QTableWidget()
         # end of tables
@@ -115,14 +126,15 @@ class MainPage(QWidget):
         self.widget()
 
     def button_pressed(self, edit, tab_name, tab_id, record_id=None):
-        print(tab_name)
+        print("tabName:",tab_name)
         table = self.get_table_data(tab_id)
         if not edit and not(record_id is None):
-            test = db.remove(record_id, tab_id)
+            test = db.remove(tab_id, record_id)
             show_message_box(test)
         else:
             dlg = Dialog(tab_id, edit, record_id, tab_name)
             dlg.exec_()
+
         create_table(table['data'], table['table'])
 
     def get_table_data(self, tab_id):
@@ -131,9 +143,9 @@ class MainPage(QWidget):
         elif tab_id == 1:
             return {'data': db.get_product(), 'table': self.productTable}
         elif tab_id == 2:
-            return {'data': db.get_subcategory(), 'table': self.subcategoryTable}
-        elif tab_id == 3:
             return {'data': db.get_category(), 'table': self.categoryTable}
+        elif tab_id == 3:
+            return {'data': db.get_sub_category(), 'table': self.sub_categoryTable}
         elif tab_id == 4:
             return {'data': db.get_tag(), 'table': self.tagTable}
         elif tab_id == 5:
@@ -186,6 +198,7 @@ class MainPage(QWidget):
     def get_id(self, table):
         # pick currently selected row, and point to it's first hidden column which contains the ID and return it as ID
         item_id = table.item(table.currentRow(), 0)
+        print("item id",item_id)
         return item_id.data(QtCore.Qt.DisplayRole.real)
 
 
@@ -225,6 +238,7 @@ def create_table(data, table):
 
 def main():
     app = QApplication(sys.argv)
+    db.create_database()
     w = MainPage(title="RachMistrz")
     sys.exit(app.exec_())
 

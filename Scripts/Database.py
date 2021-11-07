@@ -8,8 +8,12 @@ class Database:
 
     # zrobić isActive
     def __init__(self, path):
-        self.connection = sqlite3.connect(path)
-        return
+        try:
+            self.connection = sqlite3.connect(path)
+        except:
+            print(f"Cannot connect to database at path {path}")
+        finally:
+            print(f"Succesfully connected to {path}")
 
     def __del__(self):
         self.connection.close()
@@ -30,14 +34,14 @@ class Database:
         isActive INTEGER NOT NULL
         );'''
         tables.append(create_table_category)
-        create_table_subcategory = '''CREATE TABLE IF NOT EXISTS sub_category(
+        create_table_sub_category = '''CREATE TABLE IF NOT EXISTS sub_category(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         id_category INTEGER,
         isActive INTEGER NOT NULL
         );
         '''
-        tables.append(create_table_subcategory)
+        tables.append(create_table_sub_category)
         create_table_product = '''CREATE TABLE IF NOT EXISTS product(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -93,13 +97,15 @@ class Database:
     # Person table get,add,edit and remove
 
     def get_person(self, person_id=None):
-
+        print("getting person in progress")
+        print("connection: ", self.connection)
         # Check if id is null, if it's null return all records in the table.
         if person_id is None:
-            command = "Select id, first_name, last_name from person where isActive == 1"
+            command = "Select id, first_name, last_name from person where isActive = 1"
         else:
             command = f"Select id, first_name,last_name from person where id = {person_id}"
         result = pd.read_sql_query(command, self.connection)
+        print("query:\n",result)
         header = ["Imię", "Nazwisko"]
         result.rename(columns={"first_name": header[0], "last_name": header[1]}, inplace=True)
 
@@ -164,7 +170,7 @@ class Database:
     def add_income(self, id_person, amount, date):
         cursor = self.connection.cursor()
         try:
-            command = f"INSERT INTO income(id_person,amount,date,isActive) VALUES('{id_person}',{amount},'{date}',{1})"
+            command = f"INSERT INTO income(id_person,amount,date,isActive) VALUES({id_person},{amount},'{date}',{1})"
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
@@ -206,7 +212,7 @@ class Database:
 
         # Check if id is null, if it's null return all records in the table.
         if tag_id is None:
-            command = f"""id,name from tag"""
+            command = f"""Select id,name from tag"""
         else:
             command = f"""Select id,name from tag where id = {tag_id}"""
         result = pd.read_sql_query(command, self.connection)
@@ -254,27 +260,27 @@ class Database:
             result = True
         return result
 
-    # subcategory table get,add,edit and remove
+    # sub_category table get,add,edit and remove
 
-    def get_subcategory(self, subcategory_id=None):
+    def get_sub_category(self, sub_category_id=None):
 
         # Check if id is null, if it's null return all records in the table.
-        if subcategory_id is None:
-            command = f"""Select subcategory.id, subcategory.name, category.name from subcategory inner join category on 
-            subcategory.id_category = sub.id """
+        if sub_category_id is None:
+            command = f"""Select sub_category.id, sub_category.name, category.name from sub_category inner join category
+            on sub_category.id_category = sub_category.id """
         else:
-            command = f"""Select subcategory.id, subcategory.name, category.name from subcategory inner join category on 
-            subcategory.id_category = sub.id where id = {subcategory_id}"""
+            command = f"""Select sub_category.id, sub_category.name, category.name from sub_category inner join category
+             on sub_category.id_category = sub_category.id where id = {sub_category_id}"""
         result = pd.read_sql_query(command, self.connection)
         header = ["Podkategoria", "Kategoria"]
-        result.rename(columns={"name": header[0], "name": header[1]}, inplace=True)
+        result.rename(columns={0: header[0], 1 : header[1]}, inplace=True)
         return result
 
     # to edit
-    def add_subcategory(self, name, id_category):
+    def add_sub_category(self, name, id_category):
         cursor = self.connection.cursor()
         try:
-            command = f"INSERT INTO subcategory(name, id_category, isActive) VALUES('{name}',{id_category},{1})"
+            command = f"INSERT INTO sub_category(name, id_category, isActive) VALUES('{name}',{id_category},{1})"
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
@@ -284,10 +290,10 @@ class Database:
             return True
 
     # To edit
-    def edit_subcategory(self, name, id_category, id):
+    def edit_sub_category(self, name, id_category, id):
         cursor = self.connection.cursor()
         try:
-            command = f"UPDATE subcategory SET name='{name}', id_category={id_category} WHERE id={id}"
+            command = f"UPDATE sub_category SET name='{name}', id_category={id_category} WHERE id={id}"
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
@@ -296,10 +302,10 @@ class Database:
         finally:
             return True
 
-    def remove_subcategory(self, id):
+    def remove_sub_category(self, id):
         cursor = self.connection.cursor()
         try:
-            command = f"UPDATE subcategory SET isActive=0 WHERE id={id}"
+            command = f"UPDATE sub_category SET isActive=0 WHERE id={id}"
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
@@ -370,24 +376,24 @@ class Database:
 
         # Check if id is null, if it's null return all records in the table.
         if product_id is None:
-            command = f"""Select product.id, product.name, category.name, subcategory.name from product
+            command = f"""Select product.id, product.name, category.name, sub_category.name from product
              inner join category on product.id_category = category.id
-             inner join subcategory on product.id_subcategory = subcategory id"""
+             inner join sub_category on product.id_sub_category = sub_category.id"""
         else:
-            command = f"""Select product.id, product.name, category.name, subcategory.name from product
+            command = f"""Select product.id, product.name, category.name, sub_category.name from product
              inner join category on product.id_category = category.id
-             inner join subcategory on product.id_subcategory = subcategory id where id= {product_id}"""
+             inner join sub_category on product.id_sub_category = sub_category.id where id= {product_id}"""
         result = pd.read_sql_query(command, self.connection)
         header = ["Produkt", "Kategoria", "Podkategoria"]
-        result.rename(columns={"name": header[0], "name": header[1], "name": header[2]}, inplace=True)
+        #result.rename(columns={"name": header[0], "name": header[1], "name": header[2]}, inplace=True)
         return result
 
     # to edit
-    def add_product(self, name, id_category, id_subcategory):
+    def add_product(self, name, id_category, id_sub_category):
         cursor = self.connection.cursor()
         try:
-            command = f"""Insert INTO product(name,id_category,id_subcategory,isActive Values ('{name}',
-{id_category},{id_subcategory},1) """
+            command = f"""Insert INTO product(name,id_category,id_sub_category,isActive Values ('{name}',
+{id_category},{id_sub_category},1) """
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
@@ -397,10 +403,10 @@ class Database:
             return True
 
     # To edit
-    def edit_product(self, name, id_category, id_subcategory):
+    def edit_product(self, name, id_category, id_sub_category):
         cursor = self.connection.cursor()
         try:
-            command = f"""UPDATE product SET name='{name}', id_category={id_category}, id_subcategory={id_subcategory}"
+            command = f"""UPDATE product SET name='{name}', id_category={id_category}, id_sub_category={id_sub_category}"
                        WHERE id={id}"""
             cursor.execute(command)
             cursor.close()
@@ -497,7 +503,7 @@ class Database:
         elif tab_id == 2:
             table = "category"
         elif tab_id == 3:
-            table = "subcategory"
+            table = "sub_category"
         elif tab_id == 4:
             table = "tag"
         elif tab_id == 5:
