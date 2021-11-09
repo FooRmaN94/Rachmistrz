@@ -1,14 +1,16 @@
 import sys
 import pandas
+from Scripts.QCustomControls import QDoubleBox
 from PyQt5 import(
     QtCore
 )
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLineEdit, QComboBox, QPushButton, QTableWidgetItem, QVBoxLayout, QGridLayout, QTableWidget,
-    QFormLayout, QTabWidget, QDialog, QMessageBox, QDateEdit, QHBoxLayout, QLayout
+    QFormLayout, QTabWidget, QDialog, QMessageBox, QDateEdit
 )
-from Scripts import Database as database
-db = database.Database('database.db')
+from Scripts.Database import Database
+
+db = Database('database.db')
 
 
 # class Dialog inherits from QDialog class
@@ -33,27 +35,67 @@ class Dialog(QDialog):
             show_message_box(db.add_person(fname, lname))
             self.close()
 
+    def category_click(self, category_name):
+        if self.edit:
+            show_message_box(db.edit_category(category_name.text(), self.id))
+            self.close()
+        else:
+            show_message_box(db.add_category(category_name.text()))
+            self.close()
+
+    def income_click(self, person_id, amount, date):
+        if self.edit:
+            show_message_box(db.edit_income(person_id, amount, date, self.id))
+            self.close()
+        else:
+            show_message_box(db.add_income(person_id, amount, date))
+            self.close()
+
     def prepare_dialog(self, tab_id):
         # Definitions of layout design functions
 
         def income_dialog():
             print("Income dialog is creating now...")
-            layout = QFormLayout(self)
-            person_id = QComboBox(self)
-            amount = QLineEdit(self)
+            layout = QFormLayout()
+            person_id = QComboBox()
+            people = db.get_person()
+            person = []
+            ids = []
+            for unit in people.iterrows():
+                person.append(''.join([unit[1].values[1], " ", unit[1].values[2]]))
+                ids.append(unit[1].values[0])
+            person_id.addItems(person)
+            amount = QDoubleBox()
             date = QDateEdit(calendarPopup=True)
-            #if self.edit:
-                #data = db.get_income(self.id)
-                #record = data.iloc[0]
-            button = QPushButton("Ok", clicked=lambda: self.income_click())
+            if self.edit:
+                data = db.get_income(self.id)
+                record = data.iloc[0]
+                person_id.setCurrentIndex(search_index(ids, record[1]))
+                amount.setText(str(record[4]))
+                date.setDate(QtCore.QDate.fromString(record[5], "dd.MM.yyyy"))
+            else:
+                date.setDate(QtCore.QDate.currentDate())
+            button = QPushButton("Ok", clicked=lambda: self.income_click(ids[person_id.currentIndex()],amount.text(),
+                                                                         date.text()))
             layout.addRow("Osoba", person_id)
-            layout.addRow("Nazwisko", amount)
+            layout.addRow("Wpływ", amount)
             layout.addRow("Data", date)
             layout.addRow(button)
             return layout
 
         def category_dialog():
             print("category dialog is creating now...")
+            layout = QFormLayout()
+            category_name = QLineEdit()
+            if self.edit:
+                data = db.get_category(self.id)
+                record = data.iloc[0]
+                category_name.setText(record[1])
+            button = QPushButton("Ok", clicked=lambda: self.category_click(category_name))
+            layout.addRow("Nazwa", category_name)
+            layout.addRow(button)
+            return layout
+
 
         def sub_category_dialog():
             print("sub_category dialog is creating now...")
@@ -69,9 +111,9 @@ class Dialog(QDialog):
 
         def person_dialog():
             print("person dialog is creating now...")
-            layout = QFormLayout(self)
-            fname = QLineEdit(self)
-            lname = QLineEdit(self)
+            layout = QFormLayout()
+            fname = QLineEdit()
+            lname = QLineEdit()
             if self.edit:
                 data = db.get_person(self.id)
                 record = data.iloc[0]
@@ -81,6 +123,7 @@ class Dialog(QDialog):
             layout.addRow("Imię", fname)
             layout.addRow("Nazwisko", lname)
             layout.addRow(button)
+            print("person layout has ended returning now")
             return layout
 
 
@@ -127,14 +170,17 @@ class MainPage(QWidget):
         self.widget()
 
     def button_pressed(self, edit, tab_name, tab_id, record_id=None):
-        if not edit and not(record_id is None):
-            test = db.remove(tab_id, record_id)
-            show_message_box(test)
+        if record_id == -1:
+            pass
         else:
-            dlg = Dialog(tab_id, edit, record_id, tab_name)
-            dlg.exec_()
-        table = self.get_table_data(tab_id)
-        create_table(table['data'], table['table'])
+            if not edit and not(record_id is None):
+                test = db.remove(tab_id, record_id)
+                show_message_box(test)
+            else:
+                dlg = Dialog(tab_id, edit, record_id, tab_name)
+                dlg.exec_()
+            table = self.get_table_data(tab_id)
+            create_table(table['data'], table['table'])
 
     def get_table_data(self, tab_id):
         if tab_id == 0:
@@ -158,6 +204,9 @@ class MainPage(QWidget):
             self.tab.append(QWidget())
             self.tabs.addTab(self.tab[i], self.tab_names[i])
 
+    def table_selection_changed(self):
+        print("wybrano komórki")
+
     def tab_changed(self, tab_id):
         if self.tab[tab_id].layout():
             table = self.get_table_data(tab_id)
@@ -173,7 +222,7 @@ class MainPage(QWidget):
         self.move(self.left, self.top)
         # Creating a tabs:
         self.layout.addWidget(self.tabs)
-        self.create_tab_layout(0)
+       # self.create_tab_layout(0)
         self.tabs.blockSignals(True)
         self.tabs.currentChanged.connect(self.tab_changed)
         self.tabs.blockSignals(False)
@@ -189,6 +238,10 @@ class MainPage(QWidget):
                                         self.get_id(table['table'])))
         layout = QGridLayout()
         self.tab[index].setLayout(layout)
+        #if any data is selected, then function "table_selection_changed' will be exectuted
+        #table['table'].blockSignals(True)
+        #table['table'].itemSelectionChanged.connect(self.table_selection_changed())
+        #table['table'].blockSignals(False)
         table_row_height = 5
         table_columns_width = 4
         layout.addWidget(table['table'], 0, 0, table_row_height, table_columns_width)
@@ -198,8 +251,14 @@ class MainPage(QWidget):
 
     def get_id(self, table):
         # pick currently selected row, and point to it's first hidden column which contains the ID and return it as ID
-        item_id = table.item(table.currentRow(), 0)
-        return item_id.data(QtCore.Qt.DisplayRole.real)
+        row = table.currentRow()
+        print("selected indexes number:",len(table.selectedIndexes()))
+        print("selected row",row)
+        if row == -1:
+            return row
+        else:
+            item_id = table.item(table.currentRow(), 0)
+            return item_id.data(QtCore.Qt.DisplayRole.real)
 
 
 def show_message_box(test):
@@ -216,6 +275,11 @@ def show_message_box(test):
         alert.setStandardButtons(QMessageBox.Ok)
     alert.exec_()
 
+def search_index(list, searched_value):
+        for i, item in enumerate(list):
+            print(i, ".", item)
+            if item == searched_value:
+                return i
 
 def create_table(data, table):
     rows, columns = data.shape

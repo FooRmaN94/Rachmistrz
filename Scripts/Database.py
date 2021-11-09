@@ -11,7 +11,7 @@ class Database:
         try:
             self.connection = sqlite3.connect(path)
         except:
-            (f"Cannot connect to database at path {path}")
+            print(f"Cannot connect to database at path {path}")
         finally:
             print(f"Succesfully connected to {path}")
 
@@ -153,10 +153,10 @@ class Database:
         # Check if id is null, if it's null return all records in the table.
         if income_id is None:
             command = f"""Select income.id, person.first_name, person.last_name, income.amount, income.date from income
-             inner join person on income.id_person = person.id"""
+             inner join person on income.id_person = person.id where isActive = 1"""
         else:
-            command = f"""Select income.id, person.first_name, person.last_name, income.amount, income.date from income
-             inner join person on income.id_person = person.id where id = {income_id}"""
+            command = f"""Select income.id, person.id, person.first_name, person.last_name, income.amount, income.date
+             from income inner join person on income.id_person = person.id where income.id = {income_id}"""
         result = pd.read_sql_query(command, self.connection)
         header = ["Imię", "Nazwisko", "Wpływ", "Data"]
         result.rename(columns={"first_name": header[0], "last_name": header[1], "amount": header[2], "date": header[3]},
@@ -319,7 +319,7 @@ class Database:
 
         # Check if id is null, if it's null return all records in the table.
         if category_id is None:
-            command = f"Select id, name from category"
+            command = f"Select id, name from category where isActive = 1"
         else:
             command = f"Select id, name from category where id = {category_id}"
         result = pd.read_sql_query(command, self.connection)
@@ -331,7 +331,7 @@ class Database:
     def add_category(self, name):
         cursor = self.connection.cursor()
         try:
-            command = f"INSERT INTO category(name) VALUES('{name}')"
+            command = f"INSERT INTO category(name,isActive) VALUES('{name}',1)"
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
