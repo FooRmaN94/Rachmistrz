@@ -37,10 +37,17 @@ class Dialog(QDialog):
 
     def category_click(self, category_name):
         if self.edit:
-            show_message_box(db.edit_category(category_name.text(), self.id))
+            show_message_box(db.edit_category(category_name, self.id))
             self.close()
         else:
-            show_message_box(db.add_category(category_name.text()))
+            show_message_box(db.add_category(category_name))
+            self.close()
+    def sub_category_click(self, name, category_id):
+        if self.edit:
+            show_message_box(db.edit_sub_category(name, category_id, self.id))
+            self.close()
+        else:
+            show_message_box(db.add_sub_category(name, category_id))
             self.close()
 
     def income_click(self, person_id, amount, date):
@@ -75,7 +82,7 @@ class Dialog(QDialog):
                 date.setDate(QtCore.QDate.fromString(record[5], "dd.MM.yyyy"))
             else:
                 date.setDate(QtCore.QDate.currentDate())
-            button = QPushButton("Ok", clicked=lambda: self.income_click(ids[person_id.currentIndex()],amount.text(),
+            button = QPushButton("Ok", clicked=lambda: self.income_click(ids[person_id.currentIndex()], amount.text(),
                                                                          date.text()))
             layout.addRow("Osoba", person_id)
             layout.addRow("Wpływ", amount)
@@ -91,7 +98,7 @@ class Dialog(QDialog):
                 data = db.get_category(self.id)
                 record = data.iloc[0]
                 category_name.setText(record[1])
-            button = QPushButton("Ok", clicked=lambda: self.category_click(category_name))
+            button = QPushButton("Ok", clicked=lambda: self.category_click(category_name.text()))
             layout.addRow("Nazwa", category_name)
             layout.addRow(button)
             return layout
@@ -99,6 +106,27 @@ class Dialog(QDialog):
 
         def sub_category_dialog():
             print("sub_category dialog is creating now...")
+            layout = QFormLayout()
+            sub_category_name = QLineEdit()
+            categories = db.get_category()
+            category = []
+            ids = []
+            for unit in categories.iterrows():
+                category.append(unit[1].values[1])
+                ids.append(unit[1].values[0])
+            category_id = QComboBox()
+            category_id.addItems(category)
+            if self.edit:
+                data = db.get_sub_category(self.id)
+                record = data.iloc[0]
+                sub_category_name.setText(record[1])
+                category_id.setCurrentIndex(search_index(ids, record[2]))
+            button = QPushButton("Ok", clicked=lambda: self.sub_category_click(sub_category_name.text(),
+                                                                               ids[category_id.currentIndex()]))
+            layout.addRow("Nazwa podkategorii", sub_category_name)
+            layout.addRow("Kategoria", category_id)
+            layout.addRow(button)
+            return layout
 
         def tag_dialog():
             print("tag dialog is creating now...")
@@ -211,7 +239,6 @@ class MainPage(QWidget):
         if self.tab[tab_id].layout():
             table = self.get_table_data(tab_id)
             create_table(table['data'], table['table'])
-            pass
         else:
             self.create_tab_layout(tab_id)
 
@@ -263,7 +290,8 @@ class MainPage(QWidget):
 
 def show_message_box(test):
     alert = QMessageBox()
-    if test:
+    print("type", type(test[0]))
+    if test[0]:
         alert.setWindowTitle("Sukces")
         alert.setIcon(QMessageBox.Information)
         alert.setText("Pomyślnie wykonano operację")
@@ -271,13 +299,13 @@ def show_message_box(test):
     else:
         alert.setWindowTitle("Błąd")
         alert.setIcon(QMessageBox.Critical)
-        alert.setText("Błąd w trakcie wykonywania operacji")
+        alert.setText("Błąd w trakcie wykonywania operacji.")
+        alert.setInformativeText(str(test[1]))
         alert.setStandardButtons(QMessageBox.Ok)
     alert.exec_()
 
 def search_index(list, searched_value):
         for i, item in enumerate(list):
-            print(i, ".", item)
             if item == searched_value:
                 return i
 

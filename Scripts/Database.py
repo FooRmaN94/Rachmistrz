@@ -10,9 +10,9 @@ class Database:
     def __init__(self, path):
         try:
             self.connection = sqlite3.connect(path)
-        except:
+        except sqlite3.Error as msg:
             print(f"Cannot connect to database at path {path}")
-        finally:
+        else:
             print(f"Succesfully connected to {path}")
 
     def __del__(self):
@@ -102,11 +102,14 @@ class Database:
             command = "Select id, first_name, last_name from person where isActive = 1"
         else:
             command = f"Select id, first_name,last_name from person where id = {person_id}"
-        result = pd.read_sql_query(command, self.connection)
+        try:
+            result = pd.read_sql_query(command, self.connection)
+        except sqlite3.Error as msg:
+            print(msg)
         header = ["Imię", "Nazwisko"]
         result.rename(columns={"first_name": header[0], "last_name": header[1]}, inplace=True)
-
         return result
+        
 
     def add_person(self, first_name, last_name):
         cursor = self.connection.cursor()
@@ -115,10 +118,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     def edit_person(self, first_name, last_name, id):
         cursor = self.connection.cursor()
@@ -127,10 +130,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     def remove_person(self, id):
         cursor = self.connection.cursor()
@@ -140,20 +143,19 @@ class Database:
             cursor.close()
             self.connection.commit()
 
-        except:
-            result = False
-        finally:
-            result = True
-        return result
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None, ""
+        
 
     # Income table get,add,edit and remove
-
     def get_income(self, income_id=None):
 
         # Check if id is null, if it's null return all records in the table.
         if income_id is None:
             command = f"""Select income.id, person.first_name, person.last_name, income.amount, income.date from income
-             inner join person on income.id_person = person.id where isActive = 1"""
+             inner join person on income.id_person = person.id where income.isActive = 1"""
         else:
             command = f"""Select income.id, person.id, person.first_name, person.last_name, income.amount, income.date
              from income inner join person on income.id_person = person.id where income.id = {income_id}"""
@@ -171,10 +173,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     # To edit
     def edit_income(self, id_person, amount, date, id):
@@ -184,10 +186,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     def remove_income(self, id):
         cursor = self.connection.cursor()
@@ -197,11 +199,11 @@ class Database:
             cursor.close()
             self.connection.commit()
 
-        except:
-            result = False
-        finally:
-            result = True
-        return result
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None, ""
+        
 
     # Tag table get,add,edit and remove
 
@@ -209,7 +211,7 @@ class Database:
 
         # Check if id is null, if it's null return all records in the table.
         if tag_id is None:
-            command = f"""Select id,name from tag"""
+            command = f"""Select id,name from tag where isActive = 1"""
         else:
             command = f"""Select id,name from tag where id = {tag_id}"""
         result = pd.read_sql_query(command, self.connection)
@@ -225,23 +227,23 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     # To edit
     def edit_tag(self, name, id):
         cursor = self.connection.cursor()
         try:
-            command = f"UPDATE income SET name='{name}' WHERE id={id}"
+            command = f"UPDATE tag SET name='{name}' WHERE id={id}"
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     def remove_tag(self, id):
         cursor = self.connection.cursor()
@@ -251,11 +253,11 @@ class Database:
             cursor.close()
             self.connection.commit()
 
-        except:
-            result = False
-        finally:
-            result = True
-        return result
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None, ""
+        
 
     # sub_category table get,add,edit and remove
 
@@ -264,10 +266,10 @@ class Database:
         # Check if id is null, if it's null return all records in the table.
         if sub_category_id is None:
             command = f"""Select sub_category.id, sub_category.name, category.name from sub_category inner join category
-            on sub_category.id_category = sub_category.id """
+            on sub_category.id_category = category.id where sub_category.isActive = 1 """
         else:
-            command = f"""Select sub_category.id, sub_category.name, category.name from sub_category inner join category
-             on sub_category.id_category = sub_category.id where id = {sub_category_id}"""
+            command = f"""Select sub_category.id, sub_category.name, category.id, category.name from sub_category inner join category
+             on sub_category.id_category = category.id where sub_category.id = {sub_category_id}"""
         result = pd.read_sql_query(command, self.connection)
         header = ["Podkategoria", "Kategoria"]
         result.rename(columns={0: header[0], 1 : header[1]}, inplace=True)
@@ -277,14 +279,17 @@ class Database:
     def add_sub_category(self, name, id_category):
         cursor = self.connection.cursor()
         try:
-            command = f"INSERT INTO sub_category(name, id_category, isActive) VALUES('{name}',{id_category},{1})"
+            command = f"INSERT INTO sub_category(name, id_category, isActive) VALUES('{name}',{id_category},1)"
             cursor.execute(command)
-            cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+            cursor.close()
+        except sqlite3.Error as msg:
+            print(msg)
+            print("Command:\n", command)
+            return False, msg
+        else:
+            print("Command:\n", command)
+            return True, None 
 
     # To edit
     def edit_sub_category(self, name, id_category, id):
@@ -294,10 +299,12 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            print("False in editing sub")
+            return False, msg
+        else:
+            print("True in editing sub")
+            return True, None
 
     def remove_sub_category(self, id):
         cursor = self.connection.cursor()
@@ -307,11 +314,11 @@ class Database:
             cursor.close()
             self.connection.commit()
 
-        except:
-            result = False
-        finally:
-            result = True
-        return result
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None, ""
+        
 
     # category table get,add,edit and remove
 
@@ -335,10 +342,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     # To edit
     def edit_category(self, name, id):
@@ -348,10 +355,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     def remove_category(self, id):
         cursor = self.connection.cursor()
@@ -361,11 +368,11 @@ class Database:
             cursor.close()
             self.connection.commit()
 
-        except:
-            result = False
-        finally:
-            result = True
-        return result
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None, ""
+        
 
     # product table get,add,edit and remove
 
@@ -394,10 +401,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     # To edit
     def edit_product(self, name, id_category, id_sub_category):
@@ -408,10 +415,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     def remove_product(self, id):
         cursor = self.connection.cursor()
@@ -421,11 +428,11 @@ class Database:
             cursor.close()
             self.connection.commit()
 
-        except:
-            result = False
-        finally:
-            result = True
-        return result
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None, ""
+        
 
     # record table get,add,edit and remove
 
@@ -460,10 +467,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     # To edit
     def edit_record(self, id_product, id_person, price, date, id):
@@ -474,10 +481,10 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            return False
-        finally:
-            return True
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None
 
     def remove_record(self, id):
         cursor = self.connection.cursor()
@@ -487,11 +494,11 @@ class Database:
             cursor.close()
             self.connection.commit()
 
-        except:
-            result = False
-        finally:
-            result = True
-        return result
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None, ""
+        
     def remove(self,tab_id, id = 999):
         if tab_id == 0:
             table = "record"
@@ -513,9 +520,9 @@ class Database:
             cursor.execute(command)
             cursor.close()
             self.connection.commit()
-        except:
-            result = False
-        finally:
-            result = True
-        return result
+        except sqlite3.Error as msg:
+            return False, msg
+        else:
+            return True, None, ""
+        
 
